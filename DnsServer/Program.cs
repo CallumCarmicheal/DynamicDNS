@@ -20,8 +20,9 @@ namespace DnsServer {
             dnsServer.Start();
 
             C.WriteLine("Starting web server...", true, "Bootstrap");
-            var webServer = setupWebServer(database, dnsServer);
-            webServer.Start();
+            var webServer = setupWebServer(database);
+            if (webServer != null)
+                webServer.Start();
 
             C.WriteLine("Press enter to stop!", true, "Bootstrap");
             Console.ReadLine();
@@ -37,10 +38,15 @@ namespace DnsServer {
                 });
         }
 
-        static Web.WebServer setupWebServer(Database.Database database, DnsServer.DnsServer dns) {
-            var ws = new Web.WebServer();
-
-            return ws;
+        static Web.WebServer setupWebServer(Database.Database database) {
+            try {
+                var ws = new Web.WebServer(database);
+                return ws;
+            } catch(Exception ex) {
+                C.WriteLine($"{C.Red}Failed to start web server!", true, "Bootstrap:Web");
+                C.WriteLine($"{C.Red}{ex.ToString()}", true, "Bootstrap:Web");
+                return null;
+            }
         }
     }
 }

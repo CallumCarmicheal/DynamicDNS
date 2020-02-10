@@ -10,14 +10,14 @@ namespace DnsServer.Web {
         private NancyHost   host = null;
         private int         port = -1;
 
-        public WebServer(Database.Database database, DnsServer.DnsServer dns, int port = 8099) {
+        public WebServer(Database.Database database, int port = 8099) {
             this.port = port;
 
             var hostConfigs = new HostConfiguration();
             hostConfigs.UrlReservations.CreateAutomatically = true;
             hostConfigs.RewriteLocalhost = false;
 
-            var bootstrap = new Bootstrapper();
+            var bootstrap = new Bootstrapper(database);
 
             host = new NancyHost(new Uri($"http://localhost:{port}"), bootstrap, hostConfigs);
         }

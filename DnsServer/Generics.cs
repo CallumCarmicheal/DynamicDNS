@@ -8,5 +8,9 @@ namespace DnsServer {
             if (value == null) return true;
             return string.IsNullOrWhiteSpace(value.Trim());
         }
+
+        public static string Fmt(this string format, params object[] args) {
+            return string.Format(format, args);
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace DnsServer.Database {
 				-- Timestamps
 	            DateAdded			TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
 	            DateLastUpdated		TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP
-            )
+            );
         ";
 
 		const string SQL_TABLE_CREATE_DynamicDnsAuthKeys = @"

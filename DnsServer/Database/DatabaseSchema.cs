@@ -9,32 +9,49 @@ namespace DnsServer.Database {
     class DatabaseSchema {
 		const string SQL_TABLE_CREATE_DnsEntries = @"
             CREATE TABLE DnsEntries (
-	            Id	            INTEGER 	PRIMARY KEY	AUTOINCREMENT,
-	            Type	        TEXT                    DEFAULT 'DNS',
-	            RecordType	    TEXT 		NOT NULL,
-	            RecordClass	    TEXT 		NOT NULL 	DEFAULT 'INET',
-	            DomainName	    TEXT		NOT NULL,
-	            TTL	            INTEGER     NOT NULL    DEFAULT 43200,
-	            Address	        TEXT,
-	            Txt	            TEXT,
-	            DateAdded	    TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
-	            DateLastUpdated	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP
+	            Id					INTEGER 	PRIMARY KEY	AUTOINCREMENT,
+
+				-- Types
+	            Type	        	TEXT                    DEFAULT 'DNS',
+				DDNSId				INTEGER		NULL		DEFAULT NULL,
+				
+				-- DNS Information
+	            RecordType			TEXT 		NOT NULL,
+	            RecordClass			TEXT 		NOT NULL 	DEFAULT 'INET',
+	            DomainName			TEXT		NOT NULL,
+	            TTL					INTEGER     NOT NULL    DEFAULT 43200,
+					-- DNS Type specific data
+					Address				TEXT,
+					Txt					TEXT,
+				
+				-- Timestamps
+	            DateAdded			TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
+	            DateLastUpdated		TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP
             )
         ";
 
 		const string SQL_TABLE_CREATE_DynamicDnsAuthKeys = @"
 			CREATE TABLE DynamicDnsAuthKeys (
-				Id	            INTEGER 	PRIMARY KEY	AUTOINCREMENT,
-				Type			TEXT		NOT NULL 	DEFAULT 'Default',
-				RecordType		TEXT		NOT NULL,
-				RecordClass		TEXT		NOT NULL,
-				DomainName		TEXT		NOT NULL,
+				Id					INTEGER 	PRIMARY KEY	AUTOINCREMENT,
 	
-				AuthKey			TEXT		NOT NULL,
-				DateLastUsed	TIMESTAMP	DEFAULT NULL,
-	
-				DateAdded	    TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
-				DateLastUpdated	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP
+				-- Auth Keys
+				Type				TEXT		NOT NULL 	DEFAULT 'Default',
+				AuthKey				TEXT		NOT NULL,
+				DateExpires			TIMESTAMP				DEFAULT NULL,
+				DateLastUsed		TIMESTAMP				DEFAULT NULL,
+
+				-- DNS Related Information
+				RecordType			TEXT		NOT NULL,
+				RecordClass			TEXT		NOT NULL,
+				DomainName			TEXT		NOT NULL,
+				TTL					INTEGER     NOT NULL    DEFAULT 43200,
+					-- DNS Type specific data
+					Address				TEXT,
+					Txt					TEXT,
+				
+				-- Timestamps
+				DateAdded			TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
+				DateLastUpdated		TIMESTAMP	NULL		DEFAULT NULL
 			)
 		";
 
@@ -43,8 +60,8 @@ namespace DnsServer.Database {
 	        AFTER UPDATE ON DnsEntries 
 		        FOR EACH ROW WHEN NEW.{2} <= OLD.{2} 
 	        BEGIN
-		        UPDATE DnsEntries 
-			        SET DateLastUpdated = CURRENT_TIMESTAMP
+		        UPDATE {0} 
+			        SET {1} = CURRENT_TIMESTAMP
 			        WHERE {1} = old.{1};
 	        END;
         ";
@@ -55,7 +72,8 @@ namespace DnsServer.Database {
 			CreateTable(database, "DynamicDnsAuthKeys", SQL_TABLE_CREATE_DynamicDnsAuthKeys);
 
 			CreateTimestampTrigger(database, "DnsEntries", "Id", "DateLastUpdated");
-        }
+			CreateTimestampTrigger(database, "DynamicDnsAuthKeys", "Id", "DateLastUpdated");
+		}
 
 		private static void CreateTable(Database database, string TableName, string Sql) {
 			// Check if the table exists
@@ -80,7 +98,7 @@ namespace DnsServer.Database {
 		}
 
 		private static void AddEntity(Database database, string sql, string debugMessage) {
-			using (SqliteCommand command = new SqliteCommand(SQL_TABLE_CREATE_DnsEntries, database.Connection())) {
+			using (SqliteCommand command = new SqliteCommand(sql, database.Connection())) {
 				int rows;
 				if ((rows = command.ExecuteNonQuery()) > 0) {
 					C.WriteLine($"{C.Yellow}{debugMessage}", true, "Database");
